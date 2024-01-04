@@ -1,0 +1,10 @@
+{
+  "name": "1brc",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "^1.0.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
