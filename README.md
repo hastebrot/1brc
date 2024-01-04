@@ -7,6 +7,12 @@ solutions for 1brc [1] in typescript with bun.
 
 [1] https://github.com/gunnarmorling/1brc
 
+for a target time of 1 minute:
+
+- `1_000_000` records in 60 ms (0.06 seconds)
+- `10_000_000` records in 600 ms (0.6 seconds)
+- `100_000_000` records in 6000 ms (6 seconds)
+
 **overview:**
 
 - reads data textfile as byte stream
@@ -22,21 +28,19 @@ solutions for 1brc [1] in typescript with bun.
 - `❯ bun install`
 
 ```
-❯ /usr/bin/time -p bun run 1brc.bun.buffers.ts
-numOfRecords 10000000
+❯ bun run 1brc.bun.buffers.ts 10_000_000
 countMap size: 413
 sumMap size: 413
-real 7.08
-user 7.04
-sys 0.46
+numOfRecords 10,000,000
+duration: 6.856 s
+est. duration: 685.574 s
 ```
 
 ```
-❯ /usr/bin/time -p bun run 1brc.bun.lesscopy.ts
-numOfRecords 10000000
+❯ bun run 1brc.bun.lesscopy.ts 10_000_000
 countMap size: 413
 sumMap size: 413
-real 3.18
-user 3.16
-sys 0.06
+numOfRecords 10,000,000
+duration: 2.263 s
+est. duration: 226.270 s
 ```
