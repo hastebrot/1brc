@@ -1,30 +1,33 @@
-import { readCSV } from "https://deno.land/x/csv@v0.9.2/mod.ts";
-
 const file = await Deno.open("./measurements.txt");
-const reader = file.readable.getReader();
+const stream = file.readable;
+const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
-let done = false;
-let index = 0;
-while (!done) {
-  const result = await reader.read();
-  done = result.done;
-  if (result.value) {
-    decoder.decode(result.value);
+const CHAR_NEWLINE = encoder.encode("\n")[0];
+
+async function main() {
+  let count = 0;
+
+  for await (const chunk of stream) {
+    let index = 0;
+    count += chunk.slice(0, chunk.indexOf(CHAR_NEWLINE)).length;
+
+    // while (index < chunk.length) {
+    //   const char = chunk[index];
+    //   index += 1;
+
+    //   if (char === CHAR_NEWLINE) {
+    //     count += 1;
+    //   }
+    // }
   }
-  index += 1;
-  if (index > 1_000_000) {
-    break;
-  }
+
+  console.log({ count });
 }
 
-// let index = 0;
-// for await (const row of readCSV(file, { columnSeparator: ";" })) {
-//   await Array.fromAsync(row);
-//   index += 1;
-//   if (index > 1_000_000) {
-//     break;
-//   }
-// }
-
-file.close();
+await main();
+try {
+  file.close();
+} catch (_) {
+  null;
+}
