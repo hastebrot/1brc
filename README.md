@@ -44,3 +44,11 @@ numOfRecords 10,000,000
 duration: 2.263 s
 est. duration: 226.270 s
 ```
+
+---
+
+more:
+
+- `❯ /usr/bin/time -p duckdb -no-stdin -init 1brc_robin_moffatt.sql`
+- `❯ /usr/bin/time -p go run 1brc_corlin_palmer.go measurements.txt`
+- `❯ /usr/bin/time -p java --source 21 --enable-preview -XX:+UseParallelGC 1brc_olivier_bourgain.java`

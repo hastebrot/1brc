@@ -1,5 +1,5 @@
 const file = Bun.file("../measurements.txt");
-const stream = file.stream();
+const stream = file.stream(256 * 1024);
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 

@@ -1,3 +1,12 @@
+import { openKv } from "@deno/kv";
+import { join } from "node:path";
+import { deserialize as decodeV8, serialize as encodeV8 } from "node:v8";
+
+const kv = await openKv(join(import.meta.dir, "./kv.db"), {
+  encodeV8,
+  decodeV8,
+});
+
 const file = Bun.file("../measurements.txt");
 const stream = file.stream();
 const encoder = new TextEncoder();
@@ -24,14 +33,7 @@ const maxNumOfRecords = parseArg(Bun.argv[2]) || 1_000_000;
 let numOfRecords = 0;
 let isKey = true;
 let isStop = false;
-
-const fnvPrime = 16777619;
-const fnvOffset = 2166136261;
-let hash = fnvOffset;
-
-const valBuffer = new Uint8Array(10);
-let valIndex = 0;
-let valSign = 1;
+let currentKey = "";
 
 const keySink = new Bun.ArrayBufferSink();
 keySink.start({ stream: true, asUint8Array: true });
@@ -54,23 +56,13 @@ async function main() {
 
       if (char === CHAR_NEWLINE) {
         isKey = true;
-        // const value = valueSink.flush() as Uint8Array;
+        const key = currentKey;
 
-        const key = hash;
-        hash = fnvOffset;
+        const value = valueSink.flush() as Uint8Array;
+        const valueString = decoder.decode(value);
+        const valueNumber = parseFloat(valueString) * 10;
 
-        // const value = valBuffer.slice(0, valIndex);
-        // const valueString = decoder.decode(value);
-        // // const valueNumber = parseFloat(valueString) * 10;
-        // const valueNumber = parseInt(valueString) * valSign;
-        // valIndex = 0;
-        // valSign = 1;
-
-        const valueNumber = 0;
-
-        // sumMap.set(key, (sumMap.get(key) ?? 0) + valueNumber);
-        // minMap.set(key, Math.min(minMap.get(key) ?? MAX_VALUE, valueNumber));
-        // maxMap.set(key, Math.max(maxMap.get(key) ?? MIN_VALUE, valueNumber));
+        await kv.set(["city", key, numOfRecords], valueNumber);
 
         numOfRecords++;
         if (numOfRecords >= maxNumOfRecords) {
@@ -82,40 +74,21 @@ async function main() {
 
       if (char === CHAR_SEMICOLON) {
         isKey = false;
-        // const key = keySink.flush() as Uint8Array;
+        const key = keySink.flush() as Uint8Array;
+        const keyString = decoder.decode(key);
+        currentKey = keyString;
 
-        const keyString = hash;
-        //   const keyString = Bun.hash.cityHash32(key);
-        // countMap.set(keyString, (countMap.get(keyString) ?? 0) + 1);
-
+        countMap.set(keyString, (countMap.get(keyString) ?? 0) + 1);
         continue;
       }
 
       if (isKey) {
-        // keySink.write(new Uint8Array([char]));
-
-        const firstOctet = char & 0xff;
-        hash = hash ^ firstOctet;
-        hash = (hash * fnvPrime) | 0;
-        const secondOctet = char >> 8;
-        hash = hash ^ secondOctet;
-        hash = (hash * fnvPrime) | 0;
-
+        keySink.write(new Uint8Array([char]));
         continue;
       }
 
       if (!isKey) {
-        // valueSink.write(new Uint8Array([char]));
-
-        valBuffer[valIndex] = char;
-        valIndex += 1;
-
-        if (char === CHAR_MINUS) {
-          valSign = -1;
-        } else if (char !== CHAR_DOT) {
-          valBuffer[valIndex] = char;
-          valIndex += 1;
-        }
+        valueSink.write(new Uint8Array([char]));
       }
     }
   }
@@ -150,6 +123,13 @@ async function main() {
   const estimatedDurationSec =
     (durationSec * targetNumOfRecords) / numOfRecords;
   console.log("est. duration:", estimatedDurationSec.toFixed(3) + " s");
+
+  let count = 0;
+  for await (const entry of kv.list({ prefix: ["city"] })) {
+    count += 1;
+  }
+  console.log({ count });
+  kv.close();
 }
 
-main();
+await main();

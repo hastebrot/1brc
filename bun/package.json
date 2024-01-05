@@ -2,9 +2,13 @@
   "name": "1brc",
   "type": "module",
   "devDependencies": {
-    "@types/bun": "^1.0.0"
+    "@types/bun": "^1.0.0",
+    "@types/node": "^20.10.6"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@deno/kv": "^0.7.0"
   }
 }
